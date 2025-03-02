@@ -12,20 +12,21 @@ load_dotenv()
 # Get OpenAI API key securely
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🔹 Check if API Key is Missing (Throw Error)
+# Check if API Key is Missing
 if not openai_api_key:
     raise ValueError("⚠️ OpenAI API Key is missing! Add it to your .env file.")
 
 # Set API key
 openai.api_key = openai_api_key
 
-# Initialize Flask App
+# Initialize Flask App with explicit template folder
 app = Flask(__name__)
 
 # Load Pretrained Fake News Classification Model
 model_name = "lvwerra/bert-imdb"  # Pretrained model for text classification
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
 
 def extract_text_from_url(url):
     """Extract the main article content from a news URL."""
@@ -36,6 +37,7 @@ def extract_text_from_url(url):
         return article.text
     except Exception:
         return None  # If extraction fails, return None
+
 
 def gpt_explain_fake_news(text, initial_prediction):
     """Use GPT-4o to fact-check claims and provide a nuanced classification if needed."""
@@ -53,10 +55,10 @@ def gpt_explain_fake_news(text, initial_prediction):
                 {"role": "user", "content": f"Fact-check and explain this news article: {text}"}
             ]
         )
-        
+
         explanation = response.choices[0].message.content
 
-        # 🔹 Update classification based on GPT-4o's findings
+        # Update classification based on GPT-4o's findings
         if "Fake News" in explanation:
             corrected_prediction = "Fake News"
         elif "Partially True" in explanation:
@@ -69,7 +71,6 @@ def gpt_explain_fake_news(text, initial_prediction):
         return initial_prediction, f"Error: {str(e)}"
 
 
-
 def detect_fake_news(text):
     """Classify text as Real or Fake News using BERT and verify with GPT-4o."""
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
@@ -80,10 +81,10 @@ def detect_fake_news(text):
     confidence = probs.max().item() * 100
     initial_prediction = labels[probs.argmax()]
 
-    # 🔹 Get fact-checking explanation from GPT-4o
+    # Get fact-checking explanation from GPT-4o
     corrected_prediction, gpt_explanation = gpt_explain_fake_news(text, initial_prediction)
 
-    # ✅ Override BERT’s incorrect classification if GPT-4o confirms the article is real
+    # Override BERT’s incorrect classification if GPT-4o confirms the article is real
     if "not classified as 'Fake News'" in gpt_explanation or "this claim is verified by" in gpt_explanation:
         corrected_prediction = "Real News"
     elif "misleading" in gpt_explanation or "not supported by credible sources" in gpt_explanation:
@@ -92,8 +93,8 @@ def detect_fake_news(text):
         corrected_prediction = initial_prediction  # Default to BERT’s prediction if unsure
 
     return {
-        "Prediction": corrected_prediction,  
-        "Confidence": f"{confidence:.2f}",
+        "Prediction": corrected_prediction,
+        "Confidence": f"{confidence:.2f}%",
         "Explanation": gpt_explanation
     }
 
@@ -109,17 +110,40 @@ def home():
             extracted_text = extract_text_from_url(url)
             if extracted_text:
                 result = detect_fake_news(extracted_text)
-                return render_template("index.html", prediction=result["Prediction"], confidence=result["Confidence"], text=extracted_text, explanation=result["Explanation"], url=url)
             else:
                 return render_template("index.html", error="Could not extract text from the URL.", url=url)
-
-        if text:  # If text is provided, analyze it
+        elif text:  # If text is provided, analyze it
             result = detect_fake_news(text)
-            return render_template("index.html", prediction=result["Prediction"], confidence=result["Confidence"], text=text, explanation=result["Explanation"])
+        else:
+            return render_template("index.html", error="Please enter news text or a URL.")
 
-        return render_template("index.html", error="Please enter news text or a URL.")
+        explanation = result["Explanation"]  # ✅ Ensure explanation is stored in a variable
 
-    return render_template("index.html", prediction=None)
+        # ✅ Debugging print to confirm
+        print(f"Prediction: {result['Prediction']}")
+        print(f"Confidence: {result['Confidence']}")
+        print(f"Explanation: {explanation}")
+
+        # ✅ Ensure explanation is explicitly passed in render_template
+        if result["Prediction"] == "Real News":
+            return render_template("real.html", explanation=explanation)
+        elif result["Prediction"] == "Fake News":
+            return render_template("fake.html", explanation=explanation)
+        else:
+            return render_template("index.html", error="Unexpected classification result.")
+
+    return render_template("index.html")
+
+
+# ✅ Add routes for real.html and fake.html to prevent "Not Found" error
+@app.route("/real.html")
+def real_news_page():
+    return render_template("real.html")
+
+@app.route("/fake.html")
+def fake_news_page():
+    return render_template("fake.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
