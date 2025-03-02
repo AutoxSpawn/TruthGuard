@@ -1,109 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fake News Detector</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            background: linear-gradient(to right, #141e30, #243b55);
-            color: white;
-            font-family: 'Arial', sans-serif;
+      body {
+        background: linear-gradient(to right, #141e30, #243b55);
+        color: white;
+        font-family: "Arial", sans-serif;
+      }
+      .container {
+        max-width: 600px;
+        margin-top: 50px;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        color: black;
+      }
+      .btn-primary {
+        width: 100%;
+        background: #ff4b5c;
+        border: none;
+        font-size: 18px;
+        padding: 12px;
+        border-radius: 8px;
+        transition: 0.3s;
+      }
+      .btn-primary:hover {
+        background: #ff1e40;
+        transform: scale(1.05);
+      }
+      .loader {
+        display: none;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #ff4b5c;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        .container {
-            max-width: 600px;
-            margin-top: 50px;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-            color: black;
+        100% {
+          transform: rotate(360deg);
         }
-        .btn-primary {
-            width: 100%;
-            background: #ff4b5c;
-            border: none;
-            font-size: 18px;
-            padding: 12px;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-        .btn-primary:hover {
-            background: #ff1e40;
-            transform: scale(1.05);
-        }
-        .loader {
-            display: none;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #ff4b5c;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .intro {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        .start-btn {
-            background: #ff4b5c;
-            padding: 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            color: white;
-            display: inline-block;
-            font-size: 18px;
-            transition: 0.3s;
-        }
-        .start-btn:hover {
-            background: #ff1e40;
-            transform: scale(1.05);
-        }
+      }
+      .intro {
+        text-align: center;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        margin-bottom: 20px;
+      }
+      .start-btn {
+        background: #ff4b5c;
+        padding: 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        display: inline-block;
+        font-size: 18px;
+        transition: 0.3s;
+      }
+      .start-btn:hover {
+        background: #ff1e40;
+        transform: scale(1.05);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container text-center">
-        <div class="intro">
-            <h1>📰 Welcome to the Fake News Detector</h1>
-            <p>This tool helps you verify the authenticity of news articles. Enter a news text or URL, and our AI-powered system will analyze it to determine if it's real or fake.</p>
-            <a href="#detector" class="start-btn">Start Analysis</a>
-        </div>
-        <div id="detector">
-            <h2 class="my-3">Fake News Detector</h2>
-            <form method="POST" id="news-form">
-                <textarea name="news_text" class="form-control mb-3" placeholder="Enter news text here..." rows="4"></textarea>
-                <input type="text" name="news_url" class="form-control mb-3" placeholder="Or enter a news article URL">
-                <button type="submit" class="btn btn-primary">🔍 Analyze</button>
-            </form>
-            <div class="loader" id="loading"></div>
-        </div>
+      <div class="intro">
+        <h1>📰 Welcome to the Fake News Detector</h1>
+        <p>
+          This tool helps you verify the authenticity of news articles. Enter a
+          news text or URL, and our AI-powered system will analyze it to
+          determine if it's real or fake.
+        </p>
+        <a href="#detector" class="start-btn">Start Analysis</a>
+      </div>
+      <div id="detector">
+        <h2 class="my-3">Fake News Detector</h2>
+        <form method="POST" id="news-form">
+          <textarea
+            name="news_text"
+            class="form-control mb-3"
+            placeholder="Enter news text here..."
+            rows="4"
+          ></textarea>
+          <input
+            type="text"
+            name="news_url"
+            class="form-control mb-3"
+            placeholder="Or enter a news article URL"
+          />
+          <button type="submit" class="btn btn-primary">🔍 Analyze</button>
+        </form>
+        <div class="loader" id="loading"></div>
+      </div>
     </div>
+
     <script>
-        document.getElementById("news-form").addEventListener("submit", function(event) {
-            document.getElementById("loading").style.display = "block";
-            event.preventDefault();
-            
-            // Simulated response for now - to be replaced with backend integration
-            setTimeout(() => {
-                let randomResult = Math.random() > 0.5 ? 'real' : 'fake';
-                if (randomResult === 'real') {
-                    window.location.href = 'real.html';
-                } else {
-                    window.location.href = 'fake.html';
-                }
-            }, 2000);
+      document
+        .getElementById("news-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          document.getElementById("loading").style.display = "block";
+
+          const formData = new FormData(this);
+
+          try {
+            const response = await fetch("/", {
+              method: "POST",
+              body: formData,
+            });
+
+            const responseText = await response.text();
+            document.getElementById("loading").style.display = "none";
+
+            console.log("Server Response:", responseText); // ✅ Debugging print
+
+            if (response.redirected) {
+              window.location.href = response.url; // ✅ Correctly redirect if Flask redirects
+            } else if (
+              responseText.includes("✅ This News is Verified as Real")
+            ) {
+              window.location.href = "/real.html";
+            } else if (responseText.includes("❌ This News is Fake")) {
+              window.location.href = "/fake.html";
+            } else {
+              alert(
+                "Unexpected response: Could not determine news classification."
+              );
+              console.error("Response from Flask:", responseText);
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            document.getElementById("loading").style.display = "none";
+            alert("An error occurred while processing your request.");
+          }
         });
     </script>
-</body>
+  </body>
 </html>
 
 
