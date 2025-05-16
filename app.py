@@ -4,26 +4,26 @@ import torch
 import openai
 import os
 from dotenv import load_dotenv
-from newspaper import Article  # Extracts news from URLs
+from newspaper import Article  
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# Get OpenAI API key securely
+
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Check if API Key is Missing
+
 if not openai_api_key:
     raise ValueError("⚠️ OpenAI API Key is missing! Add it to your .env file.")
 
-# Set API key
+
 openai.api_key = openai_api_key
 
-# Initialize Flask App with explicit template folder
+
 app = Flask(__name__)
 
-# Load Pretrained Fake News Classification Model
-model_name = "lvwerra/bert-imdb"  # Pretrained model for text classification
+
+model_name = "lvwerra/bert-imdb" 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
@@ -36,7 +36,7 @@ def extract_text_from_url(url):
         article.parse()
         return article.text
     except Exception:
-        return None  # If extraction fails, return None
+        return None 
 
 
 def gpt_explain_fake_news(text, initial_prediction):
@@ -58,7 +58,6 @@ def gpt_explain_fake_news(text, initial_prediction):
 
         explanation = response.choices[0].message.content
 
-        # Update classification based on GPT-4o's findings
         if "Fake News" in explanation:
             corrected_prediction = "Fake News"
         elif "Partially True" in explanation:
@@ -81,16 +80,15 @@ def detect_fake_news(text):
     confidence = probs.max().item() * 100
     initial_prediction = labels[probs.argmax()]
 
-    # Get fact-checking explanation from GPT-4o
+    
     corrected_prediction, gpt_explanation = gpt_explain_fake_news(text, initial_prediction)
 
-    # Override BERT’s incorrect classification if GPT-4o confirms the article is real
     if "not classified as 'Fake News'" in gpt_explanation or "this claim is verified by" in gpt_explanation:
         corrected_prediction = "Real News"
     elif "misleading" in gpt_explanation or "not supported by credible sources" in gpt_explanation:
         corrected_prediction = "Fake News"
     else:
-        corrected_prediction = initial_prediction  # Default to BERT’s prediction if unsure
+        corrected_prediction = initial_prediction  
 
     return {
         "Prediction": corrected_prediction,
@@ -106,25 +104,24 @@ def home():
         text = request.form.get("news_text", "").strip()
         url = request.form.get("news_url", "").strip()
 
-        if url:  # If a URL is provided, extract its text
+        if url:  
             extracted_text = extract_text_from_url(url)
             if extracted_text:
                 result = detect_fake_news(extracted_text)
             else:
                 return render_template("index.html", error="Could not extract text from the URL.", url=url)
-        elif text:  # If text is provided, analyze it
+        elif text: 
             result = detect_fake_news(text)
         else:
             return render_template("index.html", error="Please enter news text or a URL.")
 
-        explanation = result["Explanation"]  # ✅ Ensure explanation is stored in a variable
+        explanation = result["Explanation"]  
 
-        # ✅ Debugging print to confirm
+        
         print(f"Prediction: {result['Prediction']}")
         print(f"Confidence: {result['Confidence']}")
         print(f"Explanation: {explanation}")
 
-        # ✅ Ensure explanation is explicitly passed in render_template
         if result["Prediction"] == "Real News":
             return render_template("real.html", explanation=explanation)
         elif result["Prediction"] == "Fake News":
@@ -134,8 +131,6 @@ def home():
 
     return render_template("index.html")
 
-
-# ✅ Add routes for real.html and fake.html to prevent "Not Found" error
 @app.route("/real.html")
 def real_news_page():
     return render_template("real.html")
